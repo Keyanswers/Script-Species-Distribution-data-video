@@ -1,0 +1,445 @@
+---
+title: "Script Species Distribution data video"
+author: "Juan Carlos Rubio-Polania"
+date: "2023-11-21"
+output: html_document
+---
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE, echo=TRUE}
+M = c('dismo','intSDM','rgbif','ntbox','spocc','maps','ggplot2', 'reticulate')
+lapply(M, require, character.only = TRUE)
+```
+
+#### dismo packages ####
+
+```{r, echo=TRUE}
+g1 = gbif('Callinectes','similis', geo = TRUE, ntries = 1, nrecs = 300)
+dim(g1)
+
+```
+
+```{r, echo = TRUE}
+head(g1[,1:5])
+```
+# Checking the dimensions of the data frame, downloading it later, and sorting it while removing NA values in the essential categories reveal differences between the total number of records and the number of reliable records needed to achieve this goal.
+
+```{r, echo = TRUE}
+dim(g1)
+```
+
+```{r, echo=TRUE}
+g11 = g1[!is.na(g1$individualCount) & !is.na(g1$lon) & !is.na(g1$lat) & !is.na(g1$datasetName),]
+dim(g11)
+```
+#### Basic plot *C. similis*
+
+```{r, fig.cap = "Figure 1. Distribution data for C. similis available from gbif database ",include = TRUE}
+plot(g11$lon, g11$lat, col = "red", pch = 19, xlab = "Longitude", ylab = "Latitude", xlim = c(-100, -65), ylim = c(17, 40),
+     main = expression(paste("Distribution data for ", italic("C. similis"))))
+
+legend("topright", legend = expression(italic("C. similis")),
+       col = c("red"), pch = 19, box.lwd = 1)
+
+map(add=T)
+```
+
+# Representing distribution of *Callinectes sapidus* using ggplot2 and maps packages
+
+```{r, fig.cap = "Figure 2. Distribution data for C. similis available from the gbif database",include = TRUE}
+map_data <- map_data("world")
+
+MapG1 = ggplot(g11, aes(x = lon, y = lat)) +
+  geom_point(aes(color = individualCount), size = 2) +
+  #geom_text(aes(label = seq), nudge_x = 0.5, nudge_y = 0.1) +
+  coord_cartesian(ylim=c(17,45),xlim =c(-100,-65)) +
+  labs( x = "Longitude", y = "Latitude", color = "Count") +
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(text= element_text(size=12, family = "Arial", colour = "black"),
+        axis.text.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain", colour = "black", size = 17),
+        axis.text.y = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.y = element_text(angle = 90,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17))+
+  borders("world", colour = "black", size= 1) +
+  ggtitle(expression(paste("Distribution data for ", italic("Callinectes similis")))) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+MapG1 +
+  geom_polygon(data = map_data, aes(x = long, y = lat, group = group), fill = "grey", color = "black", alpha = 0.5)
+
+```
+#### rgbif package  ####
+
+This package provides options to retrieve data based on depth, elevation, and geographic area among others. In this context, these options are evaluated using the depth distribution of *Achelous spinicarpus* Stimpson, 1871 (0-521 meters) and *Achelous spinimanus* Latreille, 1819 (0-393 meters). 
+
+
+```{r, echo=TRUE}
+g21 = occ_data(scientificName = "Achelous spinicarpus", hasCoordinate = TRUE, limit = 30000)
+g21 = data.frame(g21$data)
+```
+
+```{r, echo=TRUE}
+head(g21[,1:5])
+```
+
+```{r, echo=TRUE}
+dim(g21)
+```
+
+```{r, echo=TRUE}
+g211 = g21[!is.na(g21$individualCount) & !is.na(g21$decimalLongitude) & !is.na(g21$decimalLatitude) & !is.na(g21$datasetName),]
+dim(g211)
+```
+
+```{r, echo=TRUE}
+g22 = occ_data(scientificName = "Achelous spinimanus", hasCoordinate = TRUE, limit = 30000)
+g22 = data.frame(g22$data)
+```
+
+```{r, echo=TRUE}
+dim(g22)
+```
+```{r, echo=TRUE}
+g221 = g22[!is.na(g22$individualCount) & !is.na(g22$decimalLongitude) & !is.na(g22$decimalLatitude) & !is.na(g22$datasetName),]
+dim(g221)
+```
+
+```{r, echo=TRUE}
+sort(unique(g211$depth))
+```
+```{r, echo=TRUE}
+sort(unique(g221$depth))
+```
+
+```{r, echo=TRUE}
+summary(g211[,3:4])
+```
+```{r, echo=TRUE}
+summary(g221[,3:4])
+```
+#### Basic plot *A. spinicarpus* and *A. spinimanus*
+
+```{r, fig.cap = "Figure 3. Distribution data for A. spinicarpus and A. spinimanus available from gbif database ",include = TRUE}
+plot(g211$decimalLongitude, g211$decimalLatitude, col = "red", pch = 16, cex = 0.5, xlab = "Longitude", ylab = "Latitude", xlim = c(-100,0), ylim = c(-32, 45), main = expression(paste("Distribution data for ", italic("A. spinicarpus")," (red) and ", italic("A. spinimanus")," (orange)")))
+
+points(g221$decimalLongitude, g221$decimalLatitude, col = "orange", pch = 17, cex = 0.5)
+
+legend("bottomright", legend = expression(italic("A. spinicarpus"), italic("A. spinimanus")),
+       col = c("red", "orange"), pch = c(16, 17), box.lwd = 1)
+map(add=T)
+```
+
+#### Representing distribution of *A. spinicarpus* and *A. spinimanus* using ggplot2 and maps packages.
+
+```{r, fig.cap = "Figure 4. Distribution data for A. spinicarpus and A. spinimanus available from gbif database",include = TRUE}
+
+map_data <- map_data("world")
+
+MapG2 = ggplot() +
+  geom_point(data = g211, aes(x = decimalLongitude, y = decimalLatitude, color = scientificName, size = individualCount)) +
+  geom_point(data = g221, aes(x = decimalLongitude, y = decimalLatitude, color = scientificName, size = individualCount)) +
+  #geom_text(aes(label = seq), nudge_x = 0.5, nudge_y = 0.1) +
+  coord_cartesian(xlim = c(-100,0), ylim = c(-32, 45)) +
+  labs( x = "Longitude", y = "Latitude", color = c("Species"), size = "Count") +
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(text= element_text(size=12, family = "Arial", colour = "black"),
+        axis.text.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain", colour = "black", size = 17),
+        axis.text.y = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.y = element_text(angle = 90,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17))+
+  borders("world", colour = "black", size= 1) +
+  ggtitle(expression(paste("Distribution data for ", italic("A. spinicarpus")," and ",italic("A. spinimanus")))) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+MapG2 +
+  geom_polygon(data = map_data, aes(x = long, y = lat, group = group), fill = "grey", color = "black", alpha = 0.5)
+
+```
+#### ntbox package  ####
+
+```{r, echo=TRUE, fig.cap = "Figure 5. Distribution data of Phyllospongia foliascens available from gbif database", include = TRUE}
+g3 = search_gbif_data("Phyllospongia","foliascens", occlim = 10000, writeFile = FALSE, leafletplot = TRUE, showClusters = FALSE)
+```
+
+```{r, echo=TRUE}
+dim(g3)
+```
+
+```{r, echo=TRUE}
+g31 = g3[!is.na(g3$individualCount) & !is.na(g3$longitude) & !is.na(g3$latitude) & !is.na(g3$datasetName),]
+dim(g31)
+```
+
+#### intSDM package  ####
+
+```{r, echo=TRUE}
+shp = sf::st_read(dsn ="C:/shapefile/CaribbeanManagementAreas_po.shp")
+
+```
+
+```{r, echo=TRUE, fig.cap = "Figure 6. Shapefile of Puerto Rico, St. Thomas, St. John, and St. Croix islands", include = TRUE}
+plot(shp)
+```
+
+```{r, echo=TRUE}
+g4 = obtainGBIF("Dendrogyra cylindrus", shp)
+```
+
+#### spocc package  ####
+
+```{r, echo=TRUE}
+g4 = occ(query = "Dendrogyra cylindrus", from =  c('gbif', 'bison', 'inat', 'ebird', 'ecoengine','vertnet', 'obis'), 
+         limit = 10000, geometry = shp)
+g4
+```
+
+```{r, echo=TRUE}
+g4 = occ2df(g4)
+head(g4)
+```
+
+```{r, echo=TRUE}
+dim(g4)
+```
+
+```{r, echo=TRUE}
+g4$longitude = as.numeric(g4$longitude)
+g4$latitude = as.numeric(g4$latitude)
+```
+
+```{r, echo=TRUE}
+g41 = g4[!is.na(g4$longitude) & !is.na(g4$latitude) & !is.na(g4$prov),]
+dim(g41)
+```
+```{r, echo=TRUE}
+summary(g41[,2:3])
+```
+
+#### Basic plot *Dendrogyra cylindrus*
+
+```{r, fi.cap = "Figure 7. Distribution data for D. cylindrus available from inat and vernet databases",include = TRUE}
+plot(g41$longitude, g41$latitude, col = "limegreen", pch = 19, xlab = "longitude", ylab = "latitude", xlim = c(-70, -58), ylim = c(19, 15),
+     main = expression(paste("Distribution data for ", italic("Dendrogyra cylindrus"))))
+
+legend("topright", legend = expression(italic("D. cylindrus")),
+       col = c("limegreen"), pch = 19, box.lwd = 1)
+
+map(add=T)
+```
+
+#### Representing distribution of *D. cylindrus* using ggplot2, sf, and maps packages
+
+```{r, fig.cap = "Figure 8. Distribution data for D. cylindrus available from inat and vernet databases",include = TRUE}
+
+map_data <- map_data("world")
+
+MapG3 = ggplot() +
+  geom_point(data = g41, aes(x = longitude, y = latitude, color = name)) +
+  coord_cartesian(xlim = c(-70, -58), ylim = c(19, 15)) +
+  labs( x = "Longitude", y = "Latitude", color = c("Species"), size = "Conteo") +
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(text= element_text(size=12, family = "Arial", colour = "black"),
+        axis.text.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain", colour = "black", size = 17),
+        axis.text.y = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.x = element_text(angle = 0,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17),
+        axis.title.y = element_text(angle = 90,hjust = 0.5, vjust = 0.5, face = "plain",colour = "black", size = 17))+
+  borders("world", colour = "black", size= 1) +
+  ggtitle(expression(paste("Distribution data for ", italic("Dendrogyra cylindrus")))) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+MapG3 +
+  geom_polygon(data = map_data, aes(x = long, y = lat, group = group), fill = "grey", color = "black", alpha = 0.5)
+
+```
+
+#### Using Python ####
+
+```{python}
+import requests
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pygbif import occurrences
+
+import geopandas as gpd
+```
+
+#### Web Scraping Function Approach ####
+
+```{python}
+import requests
+
+def get_data(taxon_name):
+    url = f'https://api.inaturalist.org/v1/observations?taxon_name={taxon_name}&quality_grade=research&per_page=100'
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f'Error fetching data: {response.status_code}')
+
+```
+
+```{python}
+# Data 
+taxon_name = 'Panulirus argus'
+sp_data = get_data(taxon_name)
+#print(inaturalist_data)
+```
+
+```{python}
+type(sp_data)
+```
+
+```{python}
+FuncDat = pd.json_normalize(sp_data['results'])
+FuncDat
+```
+```{python}
+NCOL = occ_df.columns
+NCOL2 = list(NCOL)
+NCOL2.sort()
+```
+
+```{python}
+PAcol = ['decimalLongitude','decimalLatitude','occurrenceStatus','datasetName']#'scientificName','institutionCode']
+type(PAcol)
+```
+```{python}
+PAocc_df = occ_df[PAcol]
+PAocc_df.shape
+```
+
+```{python}
+PAocc_df.head()
+```
+
+```{python}
+PAocc_df.columns
+type(PAocc_df)
+```
+
+```{python}
+PAocc_df['Values'] = 1
+PAocc_df['datasetName'].unique()
+```
+
+```{python}
+PAocc_df = PAocc_df.dropna()
+PAocc_df.shape
+```
+
+```{python}
+PAocc_df.head()
+```
+
+```{python}
+# Crear la gráfica
+naturalearth_lowres = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+naturalearth_lowres.plot(ax=ax, color='lightgray', edgecolor='black')
+ax.set_xlim([-120, 50])
+ax.set_ylim([-50,60])
+
+ax.set_xlabel('Longitude', color = 'black', size = 11)
+ax.set_ylabel('Latitude', color = 'black', size = 11)
+
+ax.tick_params(axis = 'x', colors = 'black', labelsize = 15)
+ax.tick_params(axis = 'y', colors = 'black', labelsize = 15)
+plt.show()
+
+plt.scatter(Focc_df['decimalLongitude'], Focc_df['decimalLatitude'], color = 'orange', s = 10)
+plt.legend(['counts'],  loc='lower right', bbox_to_anchor=(1, 0))
+
+title = r'$\mathrm{Distribution}$ $\mathrm{for}$ $\it{Panulirus}$ $\it{argus}$'
+ax.set_title(title, color = 'black', size = 15)
+plt.show()
+```
+
+#### pygbif package ####
+
+```{python}
+occ_data = occurrences.search(scientificName = 'Periclimenes iridescens')
+type(occ_data)
+```
+
+```{python}
+occ_df = pd.json_normalize(occ_data['results'])
+type(occ_df)
+```
+
+```{python}
+NCOL = occ_df.columns
+NCOL2 = list(NCOL)
+NCOL2.sort()
+print(NCOL2)
+```
+
+```{python}
+Fcol = ['decimalLongitude','decimalLatitude','occurrenceStatus','datasetName']
+type(Fcol)
+```
+
+```{python}
+Focc_df = occ_df[Fcol]
+Focc_df.shape
+```
+
+```{python}
+Focc_df.head()
+```
+
+```{python}
+Focc_df.columns
+type(Focc_df)
+```
+
+```{python}
+Focc_df['Values'] = 1
+Focc_df['datasetName'].unique()
+```
+
+```{python}
+Focc_df = Focc_df.dropna()
+Focc_df.shape
+```
+
+```{python}
+Focc_df.head()
+```
+
+```{python}
+# Crear la gráfica
+naturalearth_lowres = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+naturalearth_lowres.plot(ax=ax, color='lightgray', edgecolor='black')
+ax.set_xlim([-120, 50])
+ax.set_ylim([-50,60])
+
+ax.set_xlabel('Longitude', color = 'black', size = 11)
+ax.set_ylabel('Latitude', color = 'black', size = 11)
+
+ax.tick_params(axis = 'x', colors = 'black', labelsize = 13)
+ax.tick_params(axis = 'y', colors = 'black', labelsize = 13)
+plt.show()
+
+plt.scatter(Focc_df['decimalLongitude'], Focc_df['decimalLatitude'], color = 'black', s = 40)
+plt.legend(['counts'],  loc='lower right', bbox_to_anchor=(1, 0))
+
+title = r'$\mathrm{Distribution}$ $\mathrm{for}$ $\it{Periclimenes}$ $\it{iridescens}$'
+ax.set_title(title, color = 'black', size = 15)
+plt.show()
+```
+
+
+
