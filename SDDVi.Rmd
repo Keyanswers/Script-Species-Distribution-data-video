@@ -133,7 +133,8 @@ points(g221$decimalLongitude, g221$decimalLatitude, col = "orange", pch = 17, ce
 
 legend("bottomright", legend = expression(italic("A. spinicarpus"), italic("A. spinimanus")),
        col = c("red", "orange"), pch = c(16, 17), box.lwd = 1)
-map(add=T)
+map(add=T, col = "grey", fill = TRUE)
+box()
 ```
 
 #### Representing distribution of *A. spinicarpus* and *A. spinimanus* using ggplot2 and maps packages.
