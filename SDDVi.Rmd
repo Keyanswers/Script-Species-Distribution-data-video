@@ -46,6 +46,8 @@ legend("topright", legend = expression(italic("C. similis")),
        col = c("red"), pch = 19, box.lwd = 1)
 
 map(add=T)
+
+GISTools::north.arrow(xb = -100, yb = 38.5, len = 0.33, lab = "N", col = "black", cex.lab = 2)
 ```
 
 # Representing distribution of *Callinectes sapidus* using ggplot2 and maps packages
